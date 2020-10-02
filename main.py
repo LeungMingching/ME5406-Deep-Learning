@@ -212,3 +212,4 @@ if __name__ == "__main__":
     # put all the code in final_move in a function show_result.
     # let self.give_up be the termination factor of the main while.
     # complete show_result
+    # need a threshold value to terminate the whole process
