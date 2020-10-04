@@ -205,14 +205,13 @@ class Agent:
                 break
 
 
-if __name__ == "__main__":
-    ag = Agent()
-    ag.mc(2000)
-    if not ag.give_up:
-        print(ag.q_table)
-        print('optimal path:', ag.greedy_path)
+ag = Agent()
+ag.mc(2000)
+if not ag.give_up:
+    print(ag.q_table)
+    print('optimal path:', ag.greedy_path)
 
-    # put all the code in final_move in a function show_result.
-    # let self.give_up be the termination factor of the main while.
-    # complete show_result
-    # need a threshold value to terminate the whole process
+# put all the code in final_move in a function show_result.
+# let self.give_up be the termination factor of the main while.
+# complete show_result
+# need a threshold value to terminate the whole process
