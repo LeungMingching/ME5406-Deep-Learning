@@ -69,7 +69,7 @@ class Agent:
     def pick_action(self, exp_rate=EXPLORATION_RATE):
         # default e-greedy policy with EXPLORATION RATE， input 0 to be greedy policy
         current_pos = self.State.state
-        max_qsa = -2
+        max_qsa = -2.0
         action = []
 
         if np.random.uniform(0, 1) <= exp_rate:
@@ -159,31 +159,31 @@ class Agent:
             self.reset()
             i += 1
 
-        # #  final play with greedy policy (CAN BE IMPROVED)
-        # while not self.State.isEnd:
-        #
-        #     # pick action with greedy policy
-        #     action = self.pick_action(0)
-        #
-        #     # counting steps in 1 episode
-        #     self.step_no += 1
-        #
-        #     # record the greedy path
-        #     self.greedy_path.append([self.State.state, action])
-        #
-        #     # update State
-        #     self.State = self.take_action(action)
-        #
-        #     # determine if game is end
-        #     self.State.fun_end()
-        #
-        #     if self.step_no > MAX_STEPS:
-        #         self.give_up = True
-        #         print('current optimal path cannot converge to an end. Please increase looping time...')
-        #         break
+        #  final play with greedy policy (CAN BE IMPROVED)
+        while not self.State.isEnd:
+
+            # pick action with greedy policy
+            action = self.pick_action(0)
+
+            # counting steps in 1 episode
+            self.step_no += 1
+
+            # record the greedy path
+            self.greedy_path.append([self.State.state, action])
+
+            # update State
+            self.State = self.take_action(action)
+
+            # determine if game is end
+            self.State.fun_end()
+
+            if self.step_no > MAX_STEPS:
+                self.give_up = True
+                print('current optimal path cannot converge to an end. Please increase looping time...')
+                break
 
 
 ag = Agent()
-ag.sarsa(10000)
+ag.sarsa(5000)
 print(ag.q_table)
 print('optimal path:', ag.greedy_path)
