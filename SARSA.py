@@ -3,13 +3,13 @@ import numpy as np
 BOARD_ROWS = 4
 BOARD_COLS = 4
 FRISBEE = [(3, 3)]
-HOLES = [(1, 1), (3, 0), (1, 3), (2, 3)]
+HOLES = [(1, 1), (1, 3), (2, 3), (3, 0)]
 START = (0, 0)
 
 EXPLORATION_RATE = 0.2
 DISCOUNT_RATE = 0.9
 LEARNING_RATE = 0.9
-MAX_STEPS = 1000000
+MAX_STEPS = 10000
 
 
 class State:
@@ -55,7 +55,6 @@ class Agent:
         self.actions = ['up', 'down', 'left', 'right']
         self.step_no = 0
         self.g = 0
-        self.first_visit = False
         self.greedy_path = []
         self.give_up = False
 
@@ -89,17 +88,6 @@ class Agent:
         pos = self.State.nxt_pos(action)
         return State(state=pos)  # once take action, update the State class
 
-    def deter_first_visit(self, current_nsa, whole_path):
-
-        self.first_visit = False
-
-        # obtain all same (s, a)
-        same_nsa = [a for a in whole_path if a[1:2] == current_nsa[1:2]]
-
-        # determine if the first (s, a)
-        if len(same_nsa) == 1 or current_nsa[0] == same_nsa[0][0]:
-            self.first_visit = True
-
     def reset(self):
         self.path = []
         self.State = State()
@@ -127,7 +115,10 @@ class Agent:
 
             # pick action with e-greedy policy
             action = self.pick_action()
+
+            # loop for steps
             while not self.State.isEnd and self.step_no < MAX_STEPS:
+
                 # counting steps
                 self.step_no += 1
 
@@ -151,14 +142,13 @@ class Agent:
                 self.q_table[last_state][last_action] = self.q_table[last_state][last_action] + LEARNING_RATE \
                                                         * (reward + DISCOUNT_RATE
                                                            * self.q_table[self.State.state][action]
-                                                         - self.q_table[last_state][last_action])
+                                                           - self.q_table[last_state][last_action])
 
                 # determine if game is end
                 self.State.fun_end()
 
                 # show win or lose
                 if self.State.isEnd:
-
                     if reward > 0:
                         print('Win:', reward)
                     elif reward < 0:
