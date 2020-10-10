@@ -88,6 +88,13 @@ class Agent:
         pos = self.State.nxt_pos(action)
         return State(state=pos)  # once take action, update the State class
 
+    def find_max_qa(self, state):
+        max_qsa = -2.0
+        for a in self.q_table[state]:
+            if self.q_table[state][a] > max_qsa:
+                max_qsa = self.q_table[state][a]
+        return max_qsa
+
     def reset(self):
         self.path = []
         self.State = State()
@@ -113,11 +120,11 @@ class Agent:
         # loop for episode
         while i < rounds:
 
-            # pick action with e-greedy policy
-            action = self.pick_action()
-
             # loop for steps
             while not self.State.isEnd and self.step_no < MAX_STEPS:
+
+                # pick action with e-greedy policy
+                action = self.pick_action()
 
                 # counting steps
                 self.step_no += 1
@@ -135,13 +142,13 @@ class Agent:
                 last_state = self.path[-1][1]
                 last_action = self.path[-1][2]
 
-                # choose action for next step
-                action = self.pick_action()
+                # find the max q(s'a')
+                max_qsa = self.find_max_qa(self.State.state)
 
                 # update q_table
                 self.q_table[last_state][last_action] = self.q_table[last_state][last_action] + LEARNING_RATE \
                                                         * (reward + DISCOUNT_RATE
-                                                           * self.q_table[self.State.state][action]
+                                                           * max_qsa
                                                            - self.q_table[last_state][last_action])
 
                 # determine if game is end
@@ -159,31 +166,31 @@ class Agent:
             self.reset()
             i += 1
 
-        #  final play with greedy policy (CAN BE IMPROVED)
-        # while not self.State.isEnd:
-        #
-        #     # pick action with greedy policy
-        #     action = self.pick_action(0)
-        #
-        #     # counting steps in 1 episode
-        #     self.step_no += 1
-        #
-        #     # record the greedy path
-        #     self.greedy_path.append([self.State.state, action])
-        #
-        #     # update State
-        #     self.State = self.take_action(action)
-        #
-        #     # determine if game is end
-        #     self.State.fun_end()
-        #
-        #     if self.step_no > MAX_STEPS:
-        #         self.give_up = True
-        #         print('current optimal path cannot converge to an end. Please increase looping time...')
-        #         break
+        # final play with greedy policy (CAN BE IMPROVED)
+        while not self.State.isEnd:
+
+            # pick action with greedy policy
+            action = self.pick_action(0)
+
+            # counting steps in 1 episode
+            self.step_no += 1
+
+            # record the greedy path
+            self.greedy_path.append([self.State.state, action])
+
+            # update State
+            self.State = self.take_action(action)
+
+            # determine if game is end
+            self.State.fun_end()
+
+            if self.step_no > MAX_STEPS:
+                self.give_up = True
+                print('current optimal path cannot converge to an end. Please increase looping time...')
+                break
 
 
 ag = Agent()
-ag.q_learning(10000)
+ag.q_learning(4000)
 print(ag.q_table)
 print('optimal path:', ag.greedy_path)
