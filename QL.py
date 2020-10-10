@@ -191,6 +191,6 @@ class Agent:
 
 
 ag = Agent()
-ag.q_learning(4000)
+ag.q_learning(1000)
 print(ag.q_table)
 print('optimal path:', ag.greedy_path)
