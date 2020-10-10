@@ -74,12 +74,6 @@ class Agent:
                 for a in self.actions:
                     self.ret[(i, j)][a] = [0, 0]  # [sum of g, times of first visit]
 
-    def show_path(self):
-        final_path = []
-        for s in self.q_table:
-            final_path.append(max(self.q_table[s], key=self.q_table[s].get))
-        return final_path
-
     def pick_action(self, exp_rate=EXPLORATION_RATE):
         # default e-greedy policy with EXPLORATION RATE， input 0 to be greedy policy
         current_pos = self.State.state
@@ -118,6 +112,21 @@ class Agent:
         self.State = State()
         self.step_no = 0
         self.g = 0
+
+    # def show_result(self):
+    #
+    #     # initialise all the states
+    #     states = []
+    #     for i in range(BOARD_ROWS):
+    #         for j in range(BOARD_COLS):
+    #             states.append((i, j))
+    #
+    #     path_states = [s[0] for s in self.greedy_path]
+    #
+    #     # scan the grid
+    #     for s in states:
+    #         if s in path_states:
+
 
     def mc(self, rounds=10):
         i = 0.0
@@ -182,7 +191,7 @@ class Agent:
             self.step_no += 1
 
             # record the greedy path
-            self.greedy_path.append(action)
+            self.greedy_path.append([self.State.state, action])
 
             # update State
             self.State = self.take_action(action)
@@ -196,12 +205,13 @@ class Agent:
                 break
 
 
-if __name__ == "__main__":
-    ag = Agent()
-    ag.mc(2000)
-    if not ag.give_up:
-        print(ag.q_table)
-        print('optimal path:', ag.greedy_path)
+ag = Agent()
+ag.mc(2000)
+if not ag.give_up:
+    print(ag.q_table)
+    print('optimal path:', ag.greedy_path)
 
-    # put all the code in final_move in a function show_result.
-    # let self.give_up be the termination factor of the main while.
+# put all the code in final_move in a function show_result.
+# let self.give_up be the termination factor of the main while.
+# complete show_result
+# need a threshold value to terminate the whole process

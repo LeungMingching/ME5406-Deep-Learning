@@ -1,0 +1,189 @@
+import numpy as np
+
+BOARD_ROWS = 4
+BOARD_COLS = 4
+FRISBEE = [(3, 3)]
+HOLES = [(1, 1), (1, 3), (2, 3), (3, 0)]
+START = (0, 0)
+
+EXPLORATION_RATE = 0.2
+DISCOUNT_RATE = 0.9
+LEARNING_RATE = 0.9
+MAX_STEPS = 10000
+
+
+class State:
+    def __init__(self, state=START):
+        self.isEnd = False
+        self.state = state
+        self.board = np.zeros([BOARD_ROWS, BOARD_COLS])
+
+    def get_reward(self, state=None):
+        if state is None:
+            state = self.state
+        if state in FRISBEE:
+            return 1
+        elif state in HOLES:
+            return -1
+        else:
+            return 0
+
+    def fun_end(self):
+        if (self.state in FRISBEE) or (self.state in HOLES):
+            self.isEnd = True
+
+    def nxt_pos(self, action):
+        if action == 'up':
+            nxt_state = (self.state[0] - 1, self.state[1])
+        elif action == 'down':
+            nxt_state = (self.state[0] + 1, self.state[1])
+        elif action == 'left':
+            nxt_state = (self.state[0], self.state[1] - 1)
+        else:
+            nxt_state = (self.state[0], self.state[1] + 1)
+
+        if (nxt_state[0] >= 0) and (nxt_state[0] <= BOARD_ROWS - 1):
+            if (nxt_state[1] >= 0) and (nxt_state[1] <= BOARD_COLS - 1):
+                return nxt_state
+        return self.state
+
+
+class Agent:
+    def __init__(self):
+        self.State = State()
+        self.path = []
+        self.actions = ['up', 'down', 'left', 'right']
+        self.step_no = 0
+        self.g = 0
+        self.greedy_path = []
+        self.give_up = False
+
+        # Q table initialization
+        self.q_table = {}
+        for i in range(BOARD_ROWS):
+            for j in range(BOARD_COLS):
+                self.q_table[(i, j)] = {}
+                for a in self.actions:
+                    self.q_table[(i, j)][a] = 0
+
+    def pick_action(self, exp_rate=EXPLORATION_RATE):
+        # default e-greedy policy with EXPLORATION RATE， input 0 to be greedy policy
+        current_pos = self.State.state
+        max_qsa = -2.0
+        action = []
+
+        if np.random.uniform(0, 1) <= exp_rate:
+            action = [np.random.choice(self.actions)]
+        else:
+            for a in self.actions:
+                if self.q_table[current_pos][a] > max_qsa:
+                    action = [a]
+                    max_qsa = self.q_table[current_pos][a]
+                elif self.q_table[current_pos][a] == max_qsa:
+                    action.append(a)
+        action = np.random.choice(action)
+        return action
+
+    def take_action(self, action):
+        pos = self.State.nxt_pos(action)
+        return State(state=pos)  # once take action, update the State class
+
+    def reset(self):
+        self.path = []
+        self.State = State()
+        self.step_no = 0
+
+    # def show_result(self):
+    #
+    #     # initialise all the states
+    #     states = []
+    #     for i in range(BOARD_ROWS):
+    #         for j in range(BOARD_COLS):
+    #             states.append((i, j))
+    #
+    #     path_states = [s[0] for s in self.greedy_path]
+    #
+    #     # scan the grid
+    #     for s in states:
+    #         if s in path_states:
+
+    def sarsa(self, rounds=10):
+        i = 0.0
+
+        # loop for episode
+        while i < rounds:
+
+            # pick action with e-greedy policy
+            action = self.pick_action()
+
+            # loop for steps
+            while not self.State.isEnd and self.step_no < MAX_STEPS:
+
+                # counting steps
+                self.step_no += 1
+
+                # record the path
+                self.path.append([self.step_no, self.State.state, action])
+
+                # update State
+                self.State = self.take_action(action)
+
+                # read reward
+                reward = self.State.get_reward()
+
+                # read last_state & last_action
+                last_state = self.path[-1][1]
+                last_action = self.path[-1][2]
+
+                # choose action for next step
+                action = self.pick_action()
+
+                # update q_table
+                self.q_table[last_state][last_action] = self.q_table[last_state][last_action] + LEARNING_RATE \
+                                                        * (reward + DISCOUNT_RATE
+                                                           * self.q_table[self.State.state][action]
+                                                           - self.q_table[last_state][last_action])
+
+                # determine if game is end
+                self.State.fun_end()
+
+                # show win or lose
+                if self.State.isEnd:
+                    if reward > 0:
+                        print('Win:', reward)
+                    elif reward < 0:
+                        print('Lose:', reward)
+                    else:
+                        print('End with reward = o. Error!!')
+
+            self.reset()
+            i += 1
+
+        #  final play with greedy policy (CAN BE IMPROVED)
+        while not self.State.isEnd:
+
+            # pick action with greedy policy
+            action = self.pick_action(0)
+
+            # counting steps in 1 episode
+            self.step_no += 1
+
+            # record the greedy path
+            self.greedy_path.append([self.State.state, action])
+
+            # update State
+            self.State = self.take_action(action)
+
+            # determine if game is end
+            self.State.fun_end()
+
+            if self.step_no > MAX_STEPS:
+                self.give_up = True
+                print('current optimal path cannot converge to an end. Please increase looping time...')
+                break
+
+
+ag = Agent()
+ag.sarsa(5000)
+print(ag.q_table)
+print('optimal path:', ag.greedy_path)
