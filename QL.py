@@ -138,7 +138,7 @@ class Agent:
                 # read reward
                 reward = self.State.get_reward()
 
-                # read last_state & last_action
+                # read S & A from the recorded path
                 last_state = self.path[-1][1]
                 last_action = self.path[-1][2]
 
@@ -163,8 +163,9 @@ class Agent:
                     else:
                         print('End with reward = o. Error!!')
 
+            if self.step_no < MAX_STEPS:  # only ending up to an end state can be considered as a valid episode
+                i += 1
             self.reset()
-            i += 1
 
         # final play with greedy policy (CAN BE IMPROVED)
         while not self.State.isEnd:
@@ -192,5 +193,6 @@ class Agent:
 
 ag = Agent()
 ag.q_learning(1000)
-print(ag.q_table)
-print('optimal path:', ag.greedy_path)
+if not ag.give_up:
+    print(ag.q_table)
+    print('optimal path:', ag.greedy_path)

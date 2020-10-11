@@ -156,8 +156,9 @@ class Agent:
                     else:
                         print('End with reward = o. Error!!')
 
+            if self.step_no < MAX_STEPS:  # only ending up to an end state can be considered as a valid episode
+                i += 1
             self.reset()
-            i += 1
 
         #  final play with greedy policy (CAN BE IMPROVED)
         while not self.State.isEnd:
@@ -179,11 +180,12 @@ class Agent:
 
             if self.step_no > MAX_STEPS:
                 self.give_up = True
-                print('current optimal path cannot converge to an end. Please increase looping time...')
+                print('current optimal path cannot converge to an end. Please retry or increase looping time...')
                 break
 
 
 ag = Agent()
 ag.sarsa(5000)
-print(ag.q_table)
-print('optimal path:', ag.greedy_path)
+if not ag.give_up:
+    print(ag.q_table)
+    print('optimal path:', ag.greedy_path)
