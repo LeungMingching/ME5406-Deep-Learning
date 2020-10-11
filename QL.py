@@ -12,6 +12,7 @@ LEARNING_RATE = 0.9
 MAX_STEPS = 10000
 
 
+# need interface to the main function
 def generate_grid(holes_percentage=None, row=BOARD_ROWS, col=BOARD_COLS, goal=None, start_point=None):
     # generate win state
     if goal is None:
@@ -135,19 +136,38 @@ class Agent:
         self.State = State()
         self.step_no = 0
 
-    # def show_result(self):
-    #
-    #     # initialise all the states
-    #     states = []
-    #     for i in range(BOARD_ROWS):
-    #         for j in range(BOARD_COLS):
-    #             states.append([i, j])
-    #
-    #     path_states = [s[0] for s in self.greedy_path]
-    #
-    #     # scan the grid
-    #     for s in states:
-    #         if s in path_states:
+    def show_result(self):
+
+        path_states = [s[0] for s in self.greedy_path]
+
+        for i in range(BOARD_ROWS):
+            out = ''
+            for j in range(BOARD_COLS):
+                state = (i, j)
+
+                if state in path_states:
+                    ind = path_states.index(state)
+                    a = self.greedy_path[ind][1]
+                    if a == 'up':
+                        token = '↑ '
+                    elif a == 'down':
+                        token = '↓ '
+                    elif a == 'left':
+                        token = '← '
+                    else:
+                        token = '→ '
+
+                elif state in FRISBEE:
+                    token = 'G '
+
+                elif state in HOLES:
+                    token = 'X '
+
+                else:
+                    token = '- '
+
+                out += token
+            print(out)
 
     def q_learning(self, rounds=10):
         i = 0.0
@@ -181,10 +201,9 @@ class Agent:
                 max_qsa = self.find_max_qa(self.State.state)
 
                 # update q_table
-                self.q_table[last_state][last_action] = self.q_table[last_state][last_action] + LEARNING_RATE \
-                                                        * (reward + DISCOUNT_RATE
-                                                           * max_qsa
-                                                           - self.q_table[last_state][last_action])
+                self.q_table[last_state][last_action] = \
+                    self.q_table[last_state][last_action] + \
+                    LEARNING_RATE * (reward + DISCOUNT_RATE * max_qsa - self.q_table[last_state][last_action])
 
                 # determine if game is end
                 self.State.fun_end()
@@ -214,7 +233,7 @@ class Agent:
             # record the greedy path
             self.greedy_path.append([self.State.state, action])
 
-            # update State
+            # update StateFRISBEE
             self.State = self.take_action(action)
 
             # determine if game is end
@@ -226,10 +245,9 @@ class Agent:
                 break
 
 
-# ag = Agent()
-# ag.q_learning(1000)
-# if not ag.give_up:
-#     print(ag.q_table)
-#     print('optimal path:', ag.greedy_path)
-
-print(generate_grid())
+ag = Agent()
+ag.q_learning(1000)
+if not ag.give_up:
+    print(ag.q_table)
+    print('optimal path:', ag.greedy_path)
+    ag.show_result()
