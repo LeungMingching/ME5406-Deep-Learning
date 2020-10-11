@@ -12,11 +12,46 @@ LEARNING_RATE = 0.9
 MAX_STEPS = 10000
 
 
+def generate_grid(holes_percentage=None, row=BOARD_ROWS, col=BOARD_COLS, goal=None, start_point=None):
+    # generate win state
+    if goal is None:
+        goal = FRISBEE
+    elif goal == 'R':
+        i = np.random.choice(range(row))
+        j = np.random.choice(range(col))
+        start_point = (i, j)
+
+    # generate starting point
+    if start_point is None:
+        start_point = START
+    elif start_point == 'R':
+        i = np.random.choice(range(row))
+        j = np.random.choice(range(col))
+        start_point = (i, j)
+
+    # generate lose states
+    holes = []
+    if holes_percentage is None:
+        holes = HOLES
+    else:
+        holes_no = round(row * col * holes_percentage)
+
+        n = 0
+        while n < holes_no:
+            i = np.random.choice(range(row))
+            j = np.random.choice(range(col))
+
+            if ((i, j) not in holes) and ((i, j) not in goal):
+                holes.append((i, j))
+                n += 1
+
+    return row, col, start_point, goal, holes
+
+
 class State:
     def __init__(self, state=START):
         self.isEnd = False
         self.state = state
-        self.board = np.zeros([BOARD_ROWS, BOARD_COLS])
 
     def get_reward(self, state=None):
         if state is None:
@@ -106,7 +141,7 @@ class Agent:
     #     states = []
     #     for i in range(BOARD_ROWS):
     #         for j in range(BOARD_COLS):
-    #             states.append((i, j))
+    #             states.append([i, j])
     #
     #     path_states = [s[0] for s in self.greedy_path]
     #
@@ -191,8 +226,10 @@ class Agent:
                 break
 
 
-ag = Agent()
-ag.q_learning(1000)
-if not ag.give_up:
-    print(ag.q_table)
-    print('optimal path:', ag.greedy_path)
+# ag = Agent()
+# ag.q_learning(1000)
+# if not ag.give_up:
+#     print(ag.q_table)
+#     print('optimal path:', ag.greedy_path)
+
+print(generate_grid())
