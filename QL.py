@@ -12,15 +12,16 @@ LEARNING_RATE = 0.9
 MAX_STEPS = 10000
 
 
-# need interface to the main function
-def generate_grid(holes_percentage=None, row=BOARD_ROWS, col=BOARD_COLS, goal=None, start_point=None):
+def generate_grid(row=BOARD_ROWS, col=BOARD_COLS, start_point=None, goal=None, holes_percentage=None):
+    global BOARD_ROWS, BOARD_COLS, START, FRISBEE, HOLES
+
     # generate win state
     if goal is None:
         goal = FRISBEE
     elif goal == 'R':
         i = np.random.choice(range(row))
         j = np.random.choice(range(col))
-        start_point = (i, j)
+        goal = [(i, j)]
 
     # generate starting point
     if start_point is None:
@@ -42,11 +43,110 @@ def generate_grid(holes_percentage=None, row=BOARD_ROWS, col=BOARD_COLS, goal=No
             i = np.random.choice(range(row))
             j = np.random.choice(range(col))
 
-            if ((i, j) not in holes) and ((i, j) not in goal):
+            if ((i, j) not in holes) and ((i, j) not in goal) and ((i, j) != start_point):
                 holes.append((i, j))
                 n += 1
 
+    # modify the global variables
+    BOARD_ROWS, BOARD_COLS, START, FRISBEE, HOLES = row, col, start_point, goal, holes
+
     return row, col, start_point, goal, holes
+
+
+def show_grid(grid):
+    row, col, start_point, goal, holes = grid
+
+    for i in range(row):
+        out = ''
+        for j in range(col):
+            state = (i, j)
+            if state == start_point:
+                token = 'S'
+
+            elif state in goal:
+                token = 'G'
+
+            elif state in holes:
+                token = 'X'
+
+            else:
+                token = '-'
+
+            out += token + ' '
+        print(out)
+
+
+def check_connectivity(grid):
+    # from Machine Vision
+    # scan rot180 scan rot180 scan
+    # CAN BE IMPROVED
+
+    row, col, start_point, goal, holes = grid
+
+    board = np.zeros((row, col))
+
+    for i in range(row):
+        for j in range(col):
+            if (i, j) in holes:
+                board[i][j] = -1
+
+    col_in = -np.ones(row)
+    row_in = -np.ones(col + 2)
+    board = np.insert(board, 0, values=col_in, axis=1)
+    board = np.insert(board, col + 1, values=col_in, axis=1)
+    board = np.insert(board, 0, values=row_in, axis=0)
+    board = np.insert(board, row + 1, values=row_in, axis=0)
+
+    la = 1
+    for i in range(1, row + 1):
+        for j in range(1, col + 1):
+            if board[i][j] == 0:
+
+                left = board[i][j - 1]
+                top = board[i - 1][j]
+                temp_lu = [left, top]
+
+                if temp_lu == [-1, -1]:
+                    board[i][j] = la
+                    la += 1
+                else:
+                    temp2_lu = [t for t in temp_lu if t != -1]
+                    board[i][j] = min(temp2_lu)
+
+    board = np.rot90(board, k=2)
+
+    for i in range(1, row + 1):
+        for j in range(1, col + 1):
+            if board[i][j] != -1:
+
+                left = board[i][j - 1]
+                top = board[i - 1][j]
+                temp_lu = [left, top]
+
+                if temp_lu != [-1, -1]:
+                    temp2_lu = [t for t in temp_lu if t != -1]
+                    board[i][j] = min(temp2_lu)
+
+    board = np.rot90(board, k=2)
+
+    for i in range(1, row + 1):
+        for j in range(1, col + 1):
+            if board[i][j] != -1:
+
+                left = board[i][j - 1]
+                top = board[i - 1][j]
+                temp_lu = [left, top]
+
+                if temp_lu != [-1, -1]:
+                    temp2_lu = [t for t in temp_lu if t != -1]
+                    board[i][j] = min(temp2_lu)
+
+    board = board[1:row + 1, 1:col + 1]
+
+    if board[start_point] == board[goal[0]]:
+        return True
+    else:
+        return False
 
 
 class State:
@@ -133,7 +233,7 @@ class Agent:
 
     def reset(self):
         self.path = []
-        self.State = State()
+        self.State = State(START)
         self.step_no = 0
 
     def show_result(self):
@@ -245,9 +345,28 @@ class Agent:
                 break
 
 
+# ag = Agent()
+# ag.q_learning(1000)
+# if not ag.give_up:
+#     print(ag.q_table)
+#     print('optimal path:', ag.greedy_path)
+#     ag.show_result()
+#
+#
+# grid_world = generate_grid(10, 10, 'R', 'R', 0.25)
+# print(grid_world)
+# show_grid(grid_world)
+# print(check_connectivity(grid_world))
+
+connected = False
+while not connected:
+    grid_world = generate_grid(10, 10, 'R', 'R', 0.25)  # row, col, start_point, goal[()], holes_percentage
+    connected = check_connectivity(grid_world)
+show_grid(grid_world)
+
 ag = Agent()
-ag.q_learning(1000)
+ag.q_learning(5000)
 if not ag.give_up:
-    print(ag.q_table)
+    # print(ag.q_table)
     print('optimal path:', ag.greedy_path)
     ag.show_result()
